@@ -1,98 +1,132 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, ScrollView, SafeAreaView, Dimensions, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
+import { useTheme } from '@/context/ThemeContext';
+import { Typography } from '@/constants/Typography';
+import { PremiumBackground } from '@/components/ui/PremiumBackground';
+import { SectionHeader } from '@/components/ui/SectionHeader';
+import StoryCard from '@/components/StoryCard';
+import { Story } from '@/types';
+import { supabase } from '@/lib/supabase';
 
-import { HelloWave } from '@/components/hello-wave';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
+const { width } = Dimensions.get('window');
 
 export default function HomeScreen() {
-  return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <Link href="/modal">
-          <Link.Trigger>
-            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-          </Link.Trigger>
-          <Link.Preview />
-          <Link.Menu>
-            <Link.MenuAction title="Action" icon="cube" onPress={() => alert('Action pressed')} />
-            <Link.MenuAction
-              title="Share"
-              icon="square.and.arrow.up"
-              onPress={() => alert('Share pressed')}
-            />
-            <Link.Menu title="More" icon="ellipsis">
-              <Link.MenuAction
-                title="Delete"
-                icon="trash"
-                destructive
-                onPress={() => alert('Delete pressed')}
-              />
-            </Link.Menu>
-          </Link.Menu>
-        </Link>
+  const { colors } = useTheme();
+  const [featuredStory, setFeaturedStory] = useState<Story | null>(null);
+  const [trendingStories, setTrendingStories] = useState<Story[]>([]);
+  const [loading, setLoading] = useState(true);
 
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+  useEffect(() => {
+    fetchStories();
+  }, []);
+
+  async function fetchStories() {
+    try {
+      setLoading(true);
+
+      // Fetch Trending (just latest for now)
+      const { data: latest, error: latestError } = await supabase
+        .from('stories')
+        .select('*')
+        .in('type', ['story', 'novel'])
+        .order('created_at', { ascending: false })
+        .limit(5);
+
+      if (latestError) throw latestError;
+
+      if (latest && latest.length > 0) {
+        setTrendingStories(latest);
+        setFeaturedStory(latest[0]); // Just pick the first as featured for now
+      }
+
+    } catch (error) {
+      console.error('Error fetching stories:', error);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <PremiumBackground>
+      <SafeAreaView style={{ flex: 1, paddingTop: 60 }}>
+        <ScrollView
+          contentContainerStyle={{ paddingBottom: 120 }}
+          showsVerticalScrollIndicator={false}
+        >
+          {/* Header */}
+          <View className="px-5 mb-8">
+            <Text style={[Typography.heading1, { color: colors.text }]}>For You</Text>
+            <Text style={[Typography.body, { color: colors.textSecondary }]}>Daily recommendations based on your taste.</Text>
+          </View>
+
+          {loading ? (
+            <ActivityIndicator size="large" color={colors.primary} />
+          ) : (
+            <>
+              {featuredStory && (
+                <View className="px-5 mb-10">
+                  <Text style={[Typography.title, { marginBottom: 12, color: colors.primary }]}>Editor's Pick</Text>
+                  <TouchableOpacity
+                    activeOpacity={0.9}
+                    style={{
+                      backgroundColor: colors.card,
+                      borderRadius: 16,
+                      overflow: 'hidden',
+                      borderWidth: 1,
+                      borderColor: colors.border,
+                      height: 220,
+                    }}
+                  >
+                    <View style={{ flex: 1, padding: 20, justifyContent: 'flex-end' }}>
+                      {/* Placeholder for Cover Image Background - could be actual image */}
+                      <View style={{ ...StyleSheet.absoluteFillObject, backgroundColor: '#2D3748', opacity: 0.3 }} />
+
+                      <Text style={[Typography.heading2, { color: colors.text }]}>{featuredStory.title}</Text>
+                      <Text style={[Typography.caption, { color: colors.textSecondary, marginTop: 4 }]}>
+                        {featuredStory.summary && featuredStory.summary.length > 50 ? featuredStory.summary.substring(0, 50) + '...' : featuredStory.summary}
+                      </Text>
+                    </View>
+                  </TouchableOpacity>
+                </View>
+              )}
+
+              {/* Trending Section */}
+              <View className="px-4 mb-4">
+                <SectionHeader title="Trending This Week" href="/trending" />
+                <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                  {trendingStories.map((story, index) => (
+                    <StoryCard key={story.id} story={story} index={index} />
+                  ))}
+                </ScrollView>
+              </View>
+            </>
+          )}
+
+          {/* Continue Reading (Mock - static for layout demo, updating colors only) */}
+          <View className="px-5 mb-10 mt-8">
+            <SectionHeader title="Continue Reading" href="/library" />
+            <View style={{
+              backgroundColor: colors.card,
+              padding: 16,
+              borderRadius: 12,
+              borderWidth: 1,
+              borderColor: colors.border,
+              flexDirection: 'row',
+              alignItems: 'center'
+            }}>
+              <View style={{ width: 40, height: 60, backgroundColor: colors.textSecondary, borderRadius: 4, marginRight: 12, opacity: 0.3 }} />
+              <View style={{ flex: 1 }}>
+                <Text style={[Typography.title, { color: colors.text }]}>The Silent Echo</Text>
+                <Text style={[Typography.caption, { color: colors.textSecondary }]}>Chapter 4 • 12 mins left</Text>
+                <View style={{ height: 4, backgroundColor: colors.border, borderRadius: 2, marginTop: 8, width: '100%' }}>
+                  <View style={{ height: 4, backgroundColor: colors.primary, borderRadius: 2, width: '35%' }} />
+                </View>
+              </View>
+            </View>
+          </View>
+
+        </ScrollView>
+      </SafeAreaView>
+    </PremiumBackground>
   );
 }
-
-const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
-  },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
-  },
-});
