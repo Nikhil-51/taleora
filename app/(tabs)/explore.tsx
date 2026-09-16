@@ -9,11 +9,11 @@ import StoryCard from '@/components/StoryCard';
 import { Story } from '@/types';
 import { supabase } from '@/lib/supabase';
 
-const MOCK_CATEGORIES = ['Romance', 'Fantasy', 'Mystery', 'Sci-Fi', 'Thriller', 'Horror', 'Drama'];
+const MOCK_CATEGORIES = ['All', 'Romance', 'Fantasy', 'Mystery', 'Sci-Fi', 'Thriller', 'Horror', 'Drama'];
 
 export default function ExploreScreen() {
   const { colors } = useTheme();
-  const [activeCategory, setActiveCategory] = useState('Romance');
+  const [activeCategory, setActiveCategory] = useState('All');
   const [stories, setStories] = useState<Story[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -24,12 +24,17 @@ export default function ExploreScreen() {
   async function fetchStories() {
     try {
       setLoading(true);
-      // For now, just fetch latest stories. In real app, filter by category/tags
-      const { data, error } = await supabase
+      let query = supabase
         .from('stories')
         .select('*')
         .order('created_at', { ascending: false })
         .limit(10);
+
+      if (activeCategory !== 'All') {
+        query = query.eq('genre', activeCategory);
+      }
+
+      const { data, error } = await query;
 
       if (error) throw error;
 

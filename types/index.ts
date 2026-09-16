@@ -8,6 +8,7 @@ export interface Story {
     created_at: string;
     content?: string;
     type: 'story' | 'novel' | 'chapter';
+    genre?: string;
     parent_id?: string | null;
 }
 

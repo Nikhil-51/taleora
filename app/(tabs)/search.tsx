@@ -39,7 +39,7 @@ export default function SearchScreen() {
                 const { data, error } = await supabase
                     .from('stories')
                     .select('*')
-                    .or(`title.ilike.%${query}%,summary.ilike.%${query}%`)
+                    .or(`title.ilike.%${query}%,summary.ilike.%${query}%,genre.ilike.%${query}%`)
                     .in('type', ['story', 'novel'])
                     .limit(20);
 
