@@ -83,7 +83,7 @@ export default function ExploreScreen() {
             <>
               {/* Featured / Trending Section */}
               <View className="px-4 mb-8">
-                <SectionHeader title="Trending Now" href="/trending" />
+                <SectionHeader title="Trending Now" href="/list/trending" />
                 <ScrollView horizontal showsHorizontalScrollIndicator={false}>
                   {stories.map((story, index) => (
                     <StoryCard key={story.id} story={story} index={index} />
@@ -93,7 +93,7 @@ export default function ExploreScreen() {
 
               {/* Curated Collections */}
               <View className="px-4 mb-2">
-                <SectionHeader title="Curated for You" href="/curated" />
+                <SectionHeader title="Curated for You" href="/list/curated" />
                 <View className="flex-row flex-wrap justify-between">
                   {/* Just showing list for now */}
                   {stories.map((story, index) => (

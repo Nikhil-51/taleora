@@ -1,41 +1,15 @@
 import { Tabs } from 'expo-router';
 import { Home, Search, Edit3, Library, Compass, User } from 'lucide-react-native';
-import { useTheme } from '@/context/ThemeContext';
 import { PremiumBackground } from '@/components/ui/PremiumBackground';
-import { BlurView } from 'expo-blur';
-import { StyleSheet, View } from 'react-native';
+import { CustomTabBar } from '@/components/ui/CustomTabBar';
 
 export default function TabLayout() {
-  const { colors } = useTheme();
-
   return (
     <PremiumBackground>
       <Tabs
+        tabBar={(props) => <CustomTabBar {...props} />}
         screenOptions={{
           headerShown: false,
-          tabBarActiveTintColor: colors.primary,
-          tabBarInactiveTintColor: colors.textSecondary,
-          tabBarShowLabel: false,
-          tabBarStyle: {
-            position: 'absolute',
-            bottom: 25,
-            left: 20,
-            right: 20,
-            elevation: 0,
-            borderTopWidth: 0,
-            height: 60,
-            backgroundColor: colors.card,
-            borderRadius: 25,
-            shadowColor: '#000',
-            shadowOffset: { width: 0, height: 4 },
-            shadowOpacity: 0.3,
-            shadowRadius: 4.65,
-            borderWidth: 1,
-            borderColor: colors.border,
-            paddingBottom: 0,
-            alignItems: 'center',
-            justifyContent: 'center',
-          },
         }}
       >
         <Tabs.Screen

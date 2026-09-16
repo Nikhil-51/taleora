@@ -1,15 +1,20 @@
 // code by Nikhil-51
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { Session } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
-import { View, ActivityIndicator } from 'react-native';
+import { View, ActivityIndicator, Animated } from 'react-native';
 import { ActionSheetIOS } from 'react-native';
 import { ThemeProvider } from '@/context/ThemeContext';
 
 export default function RootLayout() {
   const [session, setSession] = useState<Session | null>(null);
   const [initialized, setInitialized] = useState(false);
+  const [appReady, setAppReady] = useState(false);
+  const splashOpacity = useRef(new Animated.Value(0)).current;
+  const splashScale = useRef(new Animated.Value(0.8)).current;
+
+  
   const router = useRouter();
   const segments = useSegments();
 
@@ -27,7 +32,27 @@ export default function RootLayout() {
   }, []);
 
   useEffect(() => {
-    if (!initialized) return;
+    if (initialized) {
+      Animated.parallel([
+        Animated.timing(splashOpacity, {
+          toValue: 1,
+          duration: 1000,
+          useNativeDriver: true,
+        }),
+        Animated.spring(splashScale, {
+          toValue: 1,
+          friction: 4,
+          tension: 40,
+          useNativeDriver: true,
+        })
+      ]).start(() => {
+        setTimeout(() => setAppReady(true), 800);
+      });
+    }
+  }, [initialized]);
+
+  useEffect(() => {
+    if (!appReady) return;
 
     const inAuthGroup = segments[0] === '(auth)';
 
@@ -36,12 +61,22 @@ export default function RootLayout() {
     } else if (!session && !inAuthGroup) {
       router.replace('/(auth)/login');
     }
-  }, [session, initialized, segments]);
+  }, [session, appReady, segments]);
 
-  if (!initialized) {
+  if (!appReady) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <ActivityIndicator size="large" color="#FFD700" />
+      <View style={{ flex: 1, backgroundColor: '#8B5CF6', justifyContent: 'center', alignItems: 'center' }}>
+        <Animated.Text 
+          style={{ 
+            color: 'white', 
+            fontSize: 48, 
+            fontWeight: 'bold',
+            opacity: splashOpacity,
+            transform: [{ scale: splashScale }]
+          }}
+        >
+          taleora
+        </Animated.Text>
       </View>
     );
   }
